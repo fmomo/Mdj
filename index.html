@@ -138,13 +138,37 @@
     .legend-dot.correct { background: #2d7a3a; }
     .legend-dot.present { background: #b53030; }
     .legend-dot.absent  { background: #3a3a3a; }
+
+    #hidden-input {
+      position: fixed;
+      top: -200px;
+      left: -200px;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #mobile-hint {
+      display: none;
+      font-size: 0.8rem;
+      color: #666;
+      margin-bottom: 12px;
+    }
+
+    @media (hover: none) and (pointer: coarse) {
+      #keyboard    { display: none; }
+      #mobile-hint { display: block; }
+    }
   </style>
 </head>
 <body>
   <h1>MOT MYSTÈRE</h1>
   <div id="subtitle">Devinez le mot en 6 tentatives</div>
 
+  <input id="hidden-input" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" />
   <div id="grid"></div>
+  <div id="mobile-hint">Touchez la grille pour saisir</div>
   <div id="message"></div>
   <button id="new-game-btn" onclick="newGame()">Nouvelle partie</button>
 
@@ -363,11 +387,32 @@
       document.getElementById("message").textContent = msg;
     }
 
+    // Clavier physique (desktop)
     document.addEventListener("keydown", e => {
+      if (e.target.id === "hidden-input") return;
       const k = e.key.toUpperCase();
       if (k === "BACKSPACE") handleKey("⌫");
       else if (k === "ENTER") handleKey("ENTRÉE");
       else if (/^[A-Z]$/.test(k)) handleKey(k);
+    });
+
+    // Clavier système mobile via champ caché
+    const hiddenInput = document.getElementById("hidden-input");
+
+    hiddenInput.addEventListener("keydown", e => {
+      const k = e.key.toUpperCase();
+      if (k === "BACKSPACE") { e.preventDefault(); handleKey("⌫"); }
+      else if (k === "ENTER") { e.preventDefault(); handleKey("ENTRÉE"); }
+    });
+
+    hiddenInput.addEventListener("input", e => {
+      const chars = (e.data || "").toUpperCase().replace(/[^A-Z]/g, "");
+      for (const c of chars) handleKey(c);
+      hiddenInput.value = "";
+    });
+
+    document.getElementById("grid").addEventListener("click", () => {
+      hiddenInput.focus();
     });
 
     newGame();
