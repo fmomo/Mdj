@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mot Mystère</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      letter-spacing: 4px;
+      margin-bottom: 8px;
+      color: #e2e2e2;
+    }
+
+    #subtitle {
+      font-size: 0.85rem;
+      color: #888;
+      margin-bottom: 28px;
+    }
+
+    #grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .cell {
+      width: 56px;
+      height: 56px;
+      border: 2px solid #444;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      transition: background 0.3s, border-color 0.3s, transform 0.1s;
+      background: #16213e;
+    }
+
+    .cell.filled {
+      border-color: #666;
+      transform: scale(1.05);
+    }
+
+    .cell.correct   { background: #2d7a3a; border-color: #2d7a3a; color: #fff; }
+    .cell.present   { background: #b53030; border-color: #b53030; color: #fff; }
+    .cell.absent    { background: #3a3a3a; border-color: #3a3a3a; color: #aaa; }
+
+    #keyboard {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .kb-row { display: flex; gap: 6px; }
+
+    .key {
+      height: 52px;
+      min-width: 36px;
+      padding: 0 10px;
+      border: none;
+      border-radius: 6px;
+      background: #2e2e4e;
+      color: #eee;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: background 0.2s;
+      user-select: none;
+    }
+
+    .key:hover { background: #44447a; }
+    .key.wide  { min-width: 64px; font-size: 0.75rem; }
+    .key.correct { background: #2d7a3a; }
+    .key.present { background: #b53030; }
+    .key.absent  { background: #333; color: #666; }
+
+    #message {
+      min-height: 28px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #f0c040;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    #new-game-btn {
+      display: none;
+      padding: 10px 28px;
+      background: #4a4a9a;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #new-game-btn:hover { background: #6666cc; }
+
+    #legend {
+      display: flex;
+      gap: 20px;
+      margin-top: 20px;
+      font-size: 0.8rem;
+      color: #888;
+    }
+
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-dot {
+      width: 16px; height: 16px;
+      border-radius: 3px;
+    }
+    .legend-dot.correct { background: #2d7a3a; }
+    .legend-dot.present { background: #b53030; }
+    .legend-dot.absent  { background: #3a3a3a; }
+  </style>
+</head>
+<body>
+  <h1>MOT MYSTÈRE</h1>
+  <div id="subtitle">Devinez le mot en 6 tentatives</div>
+
+  <div id="grid"></div>
+  <div id="message"></div>
+  <button id="new-game-btn" onclick="newGame()">Nouvelle partie</button>
+
+  <div id="keyboard">
+    <div class="kb-row" id="kb-row-0"></div>
+    <div class="kb-row" id="kb-row-1"></div>
+    <div class="kb-row" id="kb-row-2"></div>
+  </div>
+
+  <div id="legend">
+    <div class="legend-item"><div class="legend-dot correct"></div> Bonne place</div>
+    <div class="legend-item"><div class="legend-dot present"></div> Mauvaise place</div>
+    <div class="legend-item"><div class="legend-dot absent"></div> Absent</div>
+  </div>
+
+  <script>
+    const WORDS = [
+      "ABUSER","ACCUSE","ACTEUR","ADMIRE","ADORER","AFFAIRE","AGENCE","AGENDA",
+      "ALARME","ALBUM","ALERTE","ALIBI","ALIGNE","ALLURE","AMICAL","AMITIE",
+      "AMUSER","ANCIEN","ANNEXE","ANNEAU","APPEL","ARBORE","ARDEUR","ARGENT",
+      "ARMURE","AROMAT","ARROGE","ASSURE","ATTEIG","ATTIRE","AUGURE","AURORE",
+      "AVANCE","AVENIR","AVOCAT","BAGAGE","BALCON","BANQUE","BARQUE","BEAUTE",
+      "BESOIN","BILLET","BLAGUE","BLESSE","BOEUF","BONHEUR","BOSSER","BOUGER",
+      "BRAISE","BRILLE","BUREAU","CABINE","CAHIER","CALMER","CAMION","CANARD",
+      "CARTON","CASINO","CERCLE","CHAISE","CHANCE","CHARME","CINEMA","CIRQUE",
+      "CLASSE","CLIENT","CLOCHE","COMBAT","COMITE","COMPTE","CONFIT","COUCHE",
+      "COURSE","CRECHE","CREUSE","CRISIS","CROSSE","CUBAIN","DACTYL","DANGER",
+      "DANSER","DEBOUT","DECLIC","DEDIER","DEGREE","DEMAIN","DEMON","DESERT",
+      "DESTIN","DETAIL","DEVISE","DIABLE","DIVINE","DOLLAR","DOMAINE","DONNER",
+      "DOUBLE","DOUTER","DRAGON","DURANT","ESPACE","ESPION","ESSAI","ESTIMER",
+      "ETALER","EVOLUE","FACHER","FALAISE","FAMEUX","FAVEUR","FAVORI","FERMER",
+      "FIGURE","FILTRE","FIXANT","FLAMME","FLOTTE","FLUIDE","FORCER","FORGER",
+      "FORMUL","FORTIN","FRAISE","FRAYER","FUGUER","FUYARD","GARDER","GATEAU",
+      "GLOIRE","GRIFFE","GRILLE","GROSSI","GROUPE","GUIDER","HABITE","HASARD",
+      "HONNEU","HUMAIN","HUMOUR","IMPACT","IMPURE","INCLUS","INDICE","INFINI",
+      "INVENU","JARDIN","JOUEUR","JOYEUX","JUNGLE","JUSTER","LAGUNE","LANGUE",
+      "LECONS","LETTRE","LIASSE","LIMITE","LIVRET","LOGIQUE","LOQUET","LUMIER",
+      "LUNETT","MAISON","MAITRE","MANGER","MARCHE","MASSIF","MELANG","METIER",
+      "MILIEU","MIROIR","MOBILE","MODELE","MONTRE","MOTEUR","MOUTON","MUSEAU",
+      "NATURE","NIVEAU","NOMBRE","NOTION","NOUVEL","NUCLEI","OBSERV","OBTENU",
+      "OPTION","ORACLE","ORDURE","OREILL","PALACE","PAROLE","PARTIR","PASSER",
+      "PELAGE","PENSEE","PERDRE","PHRASE","PILOTE","PIRATE","PLAIRE","PLANTE",
+      "PORTER","POTION","POULET","PRISON","PROJET","PROPRE","PROTEG","PUZZLE",
+      "QUALIT","RANGER","RAPIDE","RAISON","RAPPEL","REGARD","REGIME","RENARD",
+      "RENDRE","RESEAU","REVEIL","RISQUE","RYTHME","SABLES","SALUER","SANGLO",
+      "SAVOIR","SECRET","SIGNAL","SIMPLE","SOLEIL","SOMMET","SORTIR","SOURCE",
+      "STATUE","STOPPE","STYLET","SUCCES","TALENT","TARDER","TEMPLE","TENDRE",
+      "TIRADE","TOUJOU","TRAFIC","TRAJET","TRESOR","TRISTE","TROMPE","TUNNEL",
+      "ULTIME","UNIQUE","UNIVER","URGENT","UTILIS","VALEUR","VALISE","VENTRE",
+      "VERROU","VIANDE","VICTOR","VISION","VIVANT","VOYAGE","VRAIME","ZEPHYR"
+    ].filter(w => w.length === 6);
+
+    const ROWS = 6;
+    const COLS = 6;
+
+    const KB_LAYOUT = [
+      ["A","Z","E","R","T","Y","U","I","O","P"],
+      ["Q","S","D","F","G","H","J","K","L","M"],
+      ["ENTRÉE","W","X","C","V","B","N","⌫"]
+    ];
+
+    let target = "";
+    let currentRow = 0;
+    let currentCol = 0;
+    let grid = [];
+    let gameOver = false;
+    let keyStates = {};
+
+    function newGame() {
+      target = WORDS[Math.floor(Math.random() * WORDS.length)];
+      currentRow = 0;
+      currentCol = 0;
+      gameOver = false;
+      keyStates = {};
+      buildGrid();
+      buildKeyboard();
+      document.getElementById("message").textContent = "";
+      document.getElementById("new-game-btn").style.display = "none";
+    }
+
+    function buildGrid() {
+      const g = document.getElementById("grid");
+      g.innerHTML = "";
+      grid = [];
+      for (let r = 0; r < ROWS; r++) {
+        const row = document.createElement("div");
+        row.className = "row";
+        const cells = [];
+        for (let c = 0; c < COLS; c++) {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          row.appendChild(cell);
+          cells.push(cell);
+        }
+        g.appendChild(row);
+        grid.push(cells);
+      }
+    }
+
+    function buildKeyboard() {
+      KB_LAYOUT.forEach((keys, ri) => {
+        const row = document.getElementById(`kb-row-${ri}`);
+        row.innerHTML = "";
+        keys.forEach(k => {
+          const btn = document.createElement("button");
+          btn.className = "key" + (k.length > 1 ? " wide" : "");
+          btn.textContent = k;
+          btn.dataset.key = k;
+          btn.addEventListener("click", () => handleKey(k));
+          row.appendChild(btn);
+        });
+      });
+    }
+
+    function handleKey(k) {
+      if (gameOver) return;
+      if (k === "⌫" || k === "BACKSPACE") {
+        if (currentCol > 0) {
+          currentCol--;
+          grid[currentRow][currentCol].textContent = "";
+          grid[currentRow][currentCol].classList.remove("filled");
+        }
+      } else if (k === "ENTRÉE" || k === "ENTER") {
+        if (currentCol === COLS) submitGuess();
+        else showMessage("Mot incomplet !");
+      } else if (/^[A-Z]$/.test(k) && currentCol < COLS) {
+        grid[currentRow][currentCol].textContent = k;
+        grid[currentRow][currentCol].classList.add("filled");
+        currentCol++;
+      }
+    }
+
+    function submitGuess() {
+      const guess = grid[currentRow].map(c => c.textContent).join("");
+      const result = evaluate(guess, target);
+
+      result.forEach((state, i) => {
+        const cell = grid[currentRow][i];
+        setTimeout(() => {
+          cell.classList.add(state);
+          cell.classList.remove("filled");
+        }, i * 80);
+      });
+
+      // Update keyboard after animation
+      setTimeout(() => {
+        guess.split("").forEach((letter, i) => {
+          const state = result[i];
+          const prev = keyStates[letter];
+          if (prev !== "correct") {
+            if (state === "correct" || prev !== "present") {
+              keyStates[letter] = state;
+            }
+          }
+        });
+        updateKeyboard();
+
+        if (guess === target) {
+          showMessage("Bravo ! 🎉");
+          gameOver = true;
+          document.getElementById("new-game-btn").style.display = "inline-block";
+        } else if (currentRow === ROWS - 1) {
+          showMessage(`Perdu ! Le mot était : ${target}`);
+          gameOver = true;
+          document.getElementById("new-game-btn").style.display = "inline-block";
+        } else {
+          currentRow++;
+          currentCol = 0;
+        }
+      }, COLS * 80 + 200);
+    }
+
+    function evaluate(guess, target) {
+      const result = Array(COLS).fill("absent");
+      const targetLetters = target.split("");
+      const guessLetters  = guess.split("");
+      const used = Array(COLS).fill(false);
+
+      // Pass 1: correct positions
+      guessLetters.forEach((l, i) => {
+        if (l === targetLetters[i]) {
+          result[i] = "correct";
+          used[i] = true;
+        }
+      });
+
+      // Pass 2: present but wrong position
+      guessLetters.forEach((l, i) => {
+        if (result[i] === "correct") return;
+        const idx = targetLetters.findIndex((t, j) => t === l && !used[j]);
+        if (idx !== -1) {
+          result[i] = "present";
+          used[idx] = true;
+        }
+      });
+
+      return result;
+    }
+
+    function updateKeyboard() {
+      document.querySelectorAll(".key").forEach(btn => {
+        const k = btn.dataset.key;
+        if (keyStates[k]) {
+          btn.classList.remove("correct","present","absent");
+          btn.classList.add(keyStates[k]);
+        }
+      });
+    }
+
+    function showMessage(msg) {
+      document.getElementById("message").textContent = msg;
+    }
+
+    document.addEventListener("keydown", e => {
+      const k = e.key.toUpperCase();
+      if (k === "BACKSPACE") handleKey("⌫");
+      else if (k === "ENTER") handleKey("ENTRÉE");
+      else if (/^[A-Z]$/.test(k)) handleKey(k);
+    });
+
+    newGame();
+  </script>
+</body>
+</html>
