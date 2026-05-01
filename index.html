@@ -66,6 +66,7 @@
     .cell.correct   { background: #2d7a3a; border-color: #2d7a3a; color: #fff; }
     .cell.present   { background: #b53030; border-color: #b53030; color: #fff; }
     .cell.absent    { background: #3a3a3a; border-color: #3a3a3a; color: #aaa; }
+    .cell.hint      { background: #2a2a5e; border-color: #8888cc; color: #c8c8ff; }
 
     #keyboard {
       display: flex;
@@ -235,12 +236,17 @@
         for (let c = 0; c < COLS; c++) {
           const cell = document.createElement("div");
           cell.className = "cell";
+          if (c === 0) {
+            cell.textContent = target[0];
+            cell.classList.add("hint");
+          }
           row.appendChild(cell);
           cells.push(cell);
         }
         g.appendChild(row);
         grid.push(cells);
       }
+      currentCol = 1;
     }
 
     function buildKeyboard() {
@@ -261,7 +267,7 @@
     function handleKey(k) {
       if (gameOver) return;
       if (k === "⌫" || k === "BACKSPACE") {
-        if (currentCol > 0) {
+        if (currentCol > 1) {
           currentCol--;
           grid[currentRow][currentCol].textContent = "";
           grid[currentRow][currentCol].classList.remove("filled");
@@ -311,7 +317,7 @@
           document.getElementById("new-game-btn").style.display = "inline-block";
         } else {
           currentRow++;
-          currentCol = 0;
+          currentCol = 1;
         }
       }, COLS * 80 + 200);
     }
