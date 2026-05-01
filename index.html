@@ -68,20 +68,28 @@
     .cell.absent    { background: #3a3a3a; border-color: #3a3a3a; color: #aaa; }
     .cell.hint      { background: #2a2a5e; border-color: #8888cc; color: #c8c8ff; }
 
-    #keyboard {
+    #game-container {
+      width: fit-content;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 20px;
     }
 
-    .kb-row { display: flex; gap: 6px; }
+    #keyboard {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 20px;
+      width: 100%;
+    }
+
+    .kb-row { display: flex; gap: 6px; width: 100%; }
 
     .key {
+      flex: 1;
       height: 52px;
-      min-width: 36px;
-      padding: 0 10px;
+      min-width: 0;
+      padding: 0;
       border: none;
       border-radius: 6px;
       background: #2e2e4e;
@@ -95,7 +103,7 @@
     }
 
     .key:hover { background: #44447a; }
-    .key.wide  { min-width: 64px; font-size: 0.75rem; }
+    .key.wide  { flex: 1.6; font-size: 0.75rem; }
     .key.correct { background: #2d7a3a; }
     .key.present { background: #b53030; }
     .key.absent  { background: #333; color: #666; }
@@ -167,15 +175,17 @@
   <div id="subtitle">Devinez le mot en 6 tentatives</div>
 
   <input id="hidden-input" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" />
-  <div id="grid"></div>
-  <div id="mobile-hint">Touchez la grille pour saisir</div>
-  <div id="message"></div>
-  <button id="new-game-btn" onclick="newGame()">Nouvelle partie</button>
+  <div id="game-container">
+    <div id="grid"></div>
+    <div id="mobile-hint">Touchez la grille pour saisir</div>
+    <div id="message"></div>
+    <button id="new-game-btn" onclick="newGame()">Nouvelle partie</button>
 
-  <div id="keyboard">
-    <div class="kb-row" id="kb-row-0"></div>
-    <div class="kb-row" id="kb-row-1"></div>
-    <div class="kb-row" id="kb-row-2"></div>
+    <div id="keyboard">
+      <div class="kb-row" id="kb-row-0"></div>
+      <div class="kb-row" id="kb-row-1"></div>
+      <div class="kb-row" id="kb-row-2"></div>
+    </div>
   </div>
 
   <div id="legend">
